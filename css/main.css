@@ -1,0 +1,50 @@
+body {
+    color: #393e46;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+h1,
+.form {
+    text-align: center;
+}
+
+.Submit {
+    background-color: #393e46;
+    color: #eeeeee;
+    border: none;
+    font-weight: bold;
+}
+
+.simulatedUI {
+    display: flex;
+    flex-direction: column;
+}
+
+.floor {
+    display: flex;
+    /*overflow-x: auto;*/
+    margin: 1% auto;
+    padding: 1% 1% 0 1%;
+    height: 100px;
+    width: 100%;
+    background-color: #f7f7f7;
+}
+
+.lift {
+    /*height: 100%;*/
+    width: 100px;
+    background-color: #929aab;
+    margin: 0 0 0 1%;
+    /*transform: translate(0px, -146%);*/
+}
+
+.control {
+    text-align: center;
+    display: inline-grid;
+}
+
+.control button {
+    background-color: #393e46;
+    color: #eeeeee;
+    font-size: x-small;
+}

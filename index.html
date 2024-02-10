@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lift Simulation</title>
+    <link rel="stylesheet" href="./css/main.css" />
+  </head>
+  <body>
+    <h1>Lift Simulation</h1>
+
+    <div class="form">
+      <label>Enter number of Floors: </label>
+      <input type="number" required id="floors" min="1" />
+      <label>Enter number of Lifts: </label>
+      <input type="number" required id="lifts" min="1" />
+      <input type="submit" value="Simulate" class="Submit" />
+      <input type="submit" value="Reload" class="reload" disabled />
+    </div>
+
+    <div class="simulatedUI"></div>
+
+    <script src="./js/main.js"></script>
+  </body>
+</html>
