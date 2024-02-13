@@ -6,6 +6,7 @@ body {
 h1,
 .form {
     text-align: center;
+    margin-bottom: 20px;
 }
 
 .Submit {
@@ -16,6 +17,8 @@ h1,
 }
 
 .simulatedUI {
+    width: max-content;
+    min-width: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -23,18 +26,20 @@ h1,
 .floor {
     display: flex;
     /*overflow-x: auto;*/
-    margin: 1% auto;
+    /*margin: 1% auto;
     padding: 1% 1% 0 1%;
+    width: 100%;*/
     height: 100px;
-    width: 100%;
     background-color: #f7f7f7;
+    border-bottom: 3px solid lightgrey;
 }
 
 .lift {
-    /*height: 100%;*/
+    height: 100%;
     width: 100px;
     background-color: #929aab;
-    margin: 0 0 0 1%;
+    margin-left: 10px;
+    display: flex;
     /*transform: translate(0px, -146%);*/
 }
 
@@ -47,4 +52,22 @@ h1,
     background-color: #393e46;
     color: #eeeeee;
     font-size: x-small;
+}
+
+.door {
+    width: 50%;
+    background:#5e5c64;
+    border: 1px solid #929aab;
+}
+
+.ldoor{
+    transform-origin: right center;
+}
+
+.rdoor{
+    transform-origin: left center;
+}
+
+.doorOpen {
+    background: black  ;
 }
