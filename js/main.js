@@ -91,6 +91,16 @@ function renderUI(lifts, floors) {
       liftDiv.className = "lift";
       liftDiv.id = `lift${i}`;
       firstFloor.appendChild(liftDiv);
+      const leftDoor = document.createElement("div");
+      //leftDoor.className = "door";
+      leftDoor.className = "door ldoor";
+      leftDoor.id=`leftDoor${i}`;
+      liftDiv.appendChild(leftDoor);
+      const rightDoor = document.createElement("div");
+      //rightDoor.className = "door";
+      rightDoor.className = "door rdoor";
+      rightDoor.id=`rightDoor${i}`;
+      liftDiv.appendChild(rightDoor);
     }
   }
 }
@@ -121,6 +131,8 @@ function move(target, direction) {
     setTimeout(move, 2500, target, direction);
   }
 
+
+
   if (
     floorToLiftsMap.get(target).length == 0 ||
     isLiftDirectionDiff(direction, floorToLiftsMap.get(target)) === 0
@@ -142,9 +154,10 @@ function move(target, direction) {
 
 function isLiftDirectionDiff(direction, liftList) {
   let ans = 0;
-  for (let i = 0; i <= liftList.length; i++) {
+  for (let i = 0; i < liftList.length; i++) {
     if (direction == liftDir[liftList[i] - 1]) {
       ans = 1;
+      //openDoors(liftList[i],0,true);
       break;
     }
   }
@@ -162,13 +175,15 @@ function moveLiftHelper(source, direction, target) {
 
 function startAnimation(liftId, target, diff) {
   const lift = document.getElementById(`lift${liftId}`);
+  let current = liftYPos[liftId - 1];
   console.log("current y:" + liftYPos[liftId - 1]);
-  liftYPos[liftId - 1] = liftYPos[liftId - 1] - diff * 146;
+  liftYPos[liftId - 1] = liftYPos[liftId - 1] - diff * 103;
   const keyframesLocal = new KeyframeEffect(
     lift,
-    [{ transform: `translateY(${liftYPos[liftId - 1]}%)` }],
+    [{ transform: `translateY(${current}px)` }
+      ,{ transform: `translateY(${liftYPos[liftId - 1]}px)` }],
     {
-      duration: 2000,
+      duration: 2000*Math.abs(diff),
       fill: "both",
     }
   );
@@ -177,8 +192,51 @@ function startAnimation(liftId, target, diff) {
   liftAnimation.play();
   liftAnimation.onfinish = () => {
     console.log("new y:" + liftYPos[liftId - 1]);
-    busyLifts.delete(liftId);
-    floorToLiftsMap.get(target).push(liftId);
-    console.log("Animation ended..");
+    //busyLifts.delete(liftId);
+    //floorToLiftsMap.get(target).push(liftId);
+    console.log("Lift has reached..");
+    openDoors(liftId,target);
   };
+}
+
+function openDoors(liftId,target){
+  console.log("Doors Opening..");
+  console.log("target: "+target);
+  
+  const leftDoor = document.getElementById(`leftDoor${liftId}`);
+    const rightDoor = document.getElementById(`rightDoor${liftId}`);
+    const ldoorOpenKeyFrame = new KeyframeEffect(
+      leftDoor,
+      [{transform: `translateX(-100%) scaleX(0)`}],
+      {
+        duration: 2500,
+        easing: "linear",
+        direction: "alternate",
+        iterations: 2
+      }
+    );
+
+    const rdoorOpenKeyFrame = new KeyframeEffect(
+      rightDoor,
+      [{transform: `translateX(100%) scaleX(0)`}],
+      {
+        duration: 2500,
+        easing: "linear",
+        direction: "alternate",
+        iterations: 2
+      }
+    );
+
+    const ldoorAnimation = new Animation(ldoorOpenKeyFrame, document.timeline);
+
+    const rdoorAnimation = new Animation(rdoorOpenKeyFrame, document.timeline);
+    ldoorAnimation.play();
+    rdoorAnimation.play();
+
+    ldoorAnimation.onfinish = ()=>{
+      
+        busyLifts.delete(liftId);
+        floorToLiftsMap.get(target).push(liftId);
+     
+    }
 }
