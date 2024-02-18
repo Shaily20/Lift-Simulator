@@ -12,6 +12,10 @@ let busyLifts;
 let notBusyLifts;
 let liftYPos;
 let liftDir;
+let pendingEventSet;
+let processingEventSet;
+let completedEvents;
+let timerId;
 
 function init() {
   const lifts = Number(liftInput.value);
@@ -36,6 +40,9 @@ function init() {
   notBusyLifts = new Set();
   liftYPos = [];
   liftDir = [];
+  pendingEventSet = new Set();
+  processingEventSet = new Set();
+  completedEvents = [];
 
   for (let i = 1; i <= lifts; i++) {
     notBusyLifts.add(i);
@@ -48,6 +55,17 @@ function init() {
   floorToLiftsMap.set(1, liftArr);
   for (let i = 2; i <= floors; i++) {
     floorToLiftsMap.set(i, []); // storing every floor's initial lift information
+  }
+}
+
+function timeoutFunction() {
+  //every 1 sec, run pending event
+  if (pendingEventSet.size != 0) {
+    for (const x of pendingEventSet) {
+      let keyVal = x.split("+");
+      move2(Number(keyVal[0]), keyVal[1]);
+      break;
+    }
   }
 }
 
@@ -168,25 +186,52 @@ simulateInp.addEventListener("click", init);
 
 //after reaching target floor, user wants to go in which direction (up,down)
 function move(target, direction) {
+  let eventString = `${target}+${direction}`;
+  if (
+    !pendingEventSet.has(eventString) &&
+    !processingEventSet.has(eventString)
+  ) {
+    pendingEventSet.add(eventString);
+    move2(target, direction);
+    console.log(pendingEventSet);
+  }
+}
+
+function move2(target, direction) {
   console.log("move to " + target + " in direction " + direction);
   let up = Number(target),
     down = Number(target);
   const floors = Number(floorInput.value);
+  let eventString = `${target}+${direction}`;
 
   // If all lifts are busy, wait for 2.5 sec for event to start again
   if (busyLifts.size === Number(liftInput.value)) {
-    setTimeout(move, 2500, target, direction);
+    console.log(
+      "lifts are busy:: wait for pending events to process again." + eventString
+    );
+    return;
   }
+
+  console.log(`Deleting in pending ${eventString}`);
+  console.log(`Adding in processing ${eventString}`);
+  pendingEventSet.delete(eventString);
+  processingEventSet.add(eventString);
 
   const lifts = Number(liftInput.value);
   if (lifts == 1 && floorToLiftsMap.get(target).length == 1) {
-    if (!busyLifts.has(1)) openDoors(1, 0, true);
+    if (!busyLifts.has(1)) openDoors(1, target, true, direction);
+    else {
+      console.log(`Adding in pending ${eventString}`);
+      console.log(`Deleting in processing ${eventString}`);
+      pendingEventSet.add(eventString);
+      processingEventSet.delete(eventString);
+    }
     return;
   }
 
   if (
     floorToLiftsMap.get(target).length == 0 ||
-    isLiftDirectionDiff(direction, floorToLiftsMap.get(target)) === 0
+    isLiftDirectionDiff(target, direction, floorToLiftsMap.get(target)) === 0
   ) {
     while (up <= floors || down >= 1) {
       up++;
@@ -203,12 +248,20 @@ function move(target, direction) {
   }
 }
 
-function isLiftDirectionDiff(direction, liftList) {
+function isLiftDirectionDiff(target, direction, liftList) {
   let ans = 0;
   for (let i = 0; i < liftList.length; i++) {
     if (direction == liftDir[liftList[i] - 1]) {
       ans = 1;
-      if (!busyLifts.has(liftList[i])) openDoors(liftList[i], 0, true);
+      //a lift is present on same floor
+      if (!busyLifts.has(liftList[i]))
+        openDoors(liftList[i], target, true, direction);
+      else {
+        console.log(`Adding in pending ${eventString}`);
+        console.log(`Deleting in processing ${eventString}`);
+        pendingEventSet.add(eventString);
+        processingEventSet.delete(eventString);
+      }
       break;
     }
   }
@@ -216,6 +269,8 @@ function isLiftDirectionDiff(direction, liftList) {
 }
 
 function moveLiftHelper(source, direction, target) {
+  let eventString = `${target}+${direction}`;
+  console.log("in move lift helper:" + eventString);
   let i = 0;
   let toBeUsedLift = 0;
   for (i = 0; i < floorToLiftsMap.get(source).length; i++) {
@@ -225,13 +280,21 @@ function moveLiftHelper(source, direction, target) {
       busyLifts.add(toBeUsedLift);
       liftDir[toBeUsedLift - 1] = direction;
       console.log(toBeUsedLift + " lift is available on floor" + source);
-      startAnimation(toBeUsedLift, target, target - source);
+      startAnimation(toBeUsedLift, target, target - source, direction);
       break;
     }
   }
+  if (toBeUsedLift == 0) {
+    console.log(`Adding in pending ${eventString}`);
+    console.log(`Deleting in processing ${eventString}`);
+    pendingEventSet.add(eventString);
+    processingEventSet.delete(eventString);
+  }
 }
 
-function startAnimation(liftId, target, diff) {
+function startAnimation(liftId, target, diff, direction) {
+  let eventString = `${target}+${direction}`;
+  console.log("in start animation:" + eventString);
   const lift = document.getElementById(`lift${liftId}`);
   let current = liftYPos[liftId - 1];
   console.log("current y:" + liftYPos[liftId - 1]);
@@ -249,16 +312,23 @@ function startAnimation(liftId, target, diff) {
   );
 
   const liftAnimation = new Animation(keyframesLocal, document.timeline);
-  liftAnimation.play();
   liftAnimation.onfinish = () => {
     console.log("new y:" + liftYPos[liftId - 1]);
-    console.log("Lift has reached the target floor..");
-    openDoors(liftId, target, false);
+    //busyLifts.delete(liftId);
+    //floorToLiftsMap.get(target).push(liftId);
+    console.log("Lift has reached..");
+    openDoors(liftId, target, false, direction);
   };
+  liftAnimation.play();
 }
 
-function openDoors(liftId, target, onSameFloor) {
-  console.log("Doors Opening..");
+function openDoors(liftId, target, onSameFloor, direction) {
+  let eventString = `${target}+${direction}`;
+  console.log("Doors Opening.." + eventString);
+  /*console.log("target: " + target);
+  if (onSameFloor) {
+    busyLifts.add(liftId);
+  }*/
   const leftDoor = document.getElementById(`leftDoor${liftId}`);
   const rightDoor = document.getElementById(`rightDoor${liftId}`);
   const ldoorOpenKeyFrame = new KeyframeEffect(
@@ -288,13 +358,23 @@ function openDoors(liftId, target, onSameFloor) {
   if (!busyLifts.has(liftId)) {
     busyLifts.add(liftId);
   }
-  ldoorAnimation.play();
-  rdoorAnimation.play();
 
   ldoorAnimation.onfinish = () => {
     busyLifts.delete(liftId);
+    console.log(processingEventSet);
+    console.log(`deleting in processing ${eventString}`);
+    console.log(`adding in completed ${eventString}`);
+
+    processingEventSet.delete(eventString);
+    completedEvents.push(eventString);
+    console.log(completedEvents);
     if (!onSameFloor) {
       floorToLiftsMap.get(target).push(liftId);
     }
   };
+
+  ldoorAnimation.play();
+  rdoorAnimation.play();
 }
+
+setInterval(timeoutFunction, 1000);
