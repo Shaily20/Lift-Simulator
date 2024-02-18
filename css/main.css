@@ -3,17 +3,49 @@ body {
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }
 
-h1,
 .form {
-    text-align: center;
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
     margin-bottom: 20px;
 }
 
-.Submit {
-    background-color: #393e46;
-    color: #eeeeee;
+.form label {
+    margin: 5px 10px 5px 0;
+}
+
+.form input {
+    vertical-align: middle;
+    margin: 5px 10px 5px 0;
+    padding: 10px;
+}
+
+.form input[type="submit"] {
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+
+@media (max-width: 800px) {
+    .form input {
+        margin: 10px 0;
+    }
+
+    .form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+.enabledButton {
+    background-color: #5e5c64;
+    color: #ffffff;
     border: none;
     font-weight: bold;
+}
+
+.enabledInput {
+    border-color: #5e5c64;
 }
 
 .simulatedUI {
@@ -56,18 +88,21 @@ h1,
 
 .door {
     width: 50%;
-    background:#5e5c64;
+    background: #5e5c64;
     border: 1px solid #929aab;
+    transition-property: background;
+    transition-duration: 2.5s;
+    transition-timing-function: ease-out;
 }
 
-.ldoor{
+.ldoor {
     transform-origin: right center;
 }
 
-.rdoor{
+.rdoor {
     transform-origin: left center;
 }
 
 .doorOpen {
-    background: black  ;
+    background: black;
 }
