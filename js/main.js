@@ -53,9 +53,9 @@ function init() {
 
 function validateInput(lifts, floors) {
   let ans = true;
-  let errorText;
+  let errorText = "";
   if (!Number.isInteger(floors) || isNaN(floors) || floors < 2) {
-    errorText = "Floors can only be a positive integer greater than 2.\n";
+    errorText += "Floors can only be a positive integer greater than 2.\n";
     ans = false;
   }
   if (!Number.isInteger(lifts) || isNaN(lifts) || lifts < 1) {
@@ -92,6 +92,9 @@ function renderUI(lifts, floors) {
       });
       upSpan.appendChild(upBtn);
 
+      const floorName = document.createElement("span");
+      floorName.textContent = i;
+
       const downSpan = document.createElement("span");
       const downBtn = document.createElement("button");
       downBtn.textContent = "D";
@@ -102,10 +105,13 @@ function renderUI(lifts, floors) {
 
       if (i == 1) {
         controlDiv.appendChild(upSpan);
+        controlDiv.appendChild(floorName);
       } else if (i == floors) {
         controlDiv.appendChild(downSpan);
+        controlDiv.appendChild(floorName);
       } else {
         controlDiv.appendChild(upSpan);
+        controlDiv.appendChild(floorName);
         controlDiv.appendChild(downSpan);
       }
       console.log(floorDiv.id);
