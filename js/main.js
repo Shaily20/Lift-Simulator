@@ -2,7 +2,7 @@ const liftInput = document.querySelector("#lifts");
 const floorInput = document.querySelector("#floors");
 
 const simulateInp = document.querySelector(".Submit");
-const clearInp = document.querySelector(".clear");
+//const clearInp = document.querySelector(".clear");
 const simulatedUIDiv = document.querySelector(".simulatedUI");
 
 let floorToLiftsMap;
@@ -34,7 +34,6 @@ function init() {
   liftArr = [];
   busyLifts = new Set();
   notBusyLifts = new Set();
-
   liftYPos = [];
   liftDir = [];
 
@@ -139,11 +138,11 @@ function disableForm() {
   floorInput.disabled = true;
   simulateInp.disabled = true;
   simulateInp.className = "Submit";
-  clearInp.disabled = false;
-  clearInp.className = "clear enabledButton";
+  //clearInp.disabled = false;
+  //clearInp.className = "clear enabledButton";
 }
 
-function clearPage() {
+/*function clearPage() {
   liftInput.value = 1;
   liftInput.disabled = false;
   floorInput.value = 2;
@@ -156,10 +155,10 @@ function clearPage() {
   while (simulatedUIDiv.firstChild) {
     simulatedUIDiv.removeChild(simulatedUIDiv.firstChild);
   }
-}
+}*/
 
 simulateInp.addEventListener("click", init);
-clearInp.addEventListener("click", clearPage);
+//clearInp.addEventListener("click", clearPage);
 
 //after reaching target floor, user wants to go in which direction (up,down)
 function move(target, direction) {
@@ -254,7 +253,6 @@ function startAnimation(liftId, target, diff) {
 
 function openDoors(liftId, target, onSameFloor) {
   console.log("Doors Opening..");
-  
   const leftDoor = document.getElementById(`leftDoor${liftId}`);
   const rightDoor = document.getElementById(`rightDoor${liftId}`);
   const ldoorOpenKeyFrame = new KeyframeEffect(
