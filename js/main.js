@@ -2,36 +2,47 @@ const liftInput = document.querySelector("#lifts");
 const floorInput = document.querySelector("#floors");
 
 const simulateInp = document.querySelector(".Submit");
-const reloadInp = document.querySelector(".reload");
+const clearInp = document.querySelector(".clear");
 const simulatedUIDiv = document.querySelector(".simulatedUI");
 
-const floorToLiftsMap = new Map();
-const liftToFloorMap = new Map();
-let liftArr = [];
-const busyLifts = new Set();
-const notBusyLifts = new Set();
-
-const liftYPos = [];
-const liftDir = [];
+let floorToLiftsMap;
+let liftToFloorMap;
+let liftArr;
+let busyLifts;
+let notBusyLifts;
+let liftYPos;
+let liftDir;
 
 function init() {
   const lifts = Number(liftInput.value);
   const floors = Number(floorInput.value);
+
+  if (validateInput(lifts, floors) == false) {
+    console.log("Invalid lifts/floors Input");
+    return;
+  }
+
   console.log(
     `Initializing environment for lifts: ${lifts} and floors: ${floors}...`
   );
 
   renderUI(lifts, floors);
-  liftInput.disabled = true;
-  floorInput.disabled = true;
-  simulateInp.disabled = true;
-  reloadInp.disabled = false;
+  disableForm();
+
+  floorToLiftsMap = new Map();
+  liftToFloorMap = new Map();
+  liftArr = [];
+  busyLifts = new Set();
+  notBusyLifts = new Set();
+
+  liftYPos = [];
+  liftDir = [];
 
   for (let i = 1; i <= lifts; i++) {
     notBusyLifts.add(i);
     liftArr.push(i);
     liftYPos.push(0);
-    liftDir.push("");
+    liftDir.push("up");
     liftToFloorMap.set(i, 1); // initially every lift is present on 1st floor
   }
 
@@ -39,6 +50,23 @@ function init() {
   for (let i = 2; i <= floors; i++) {
     floorToLiftsMap.set(i, []); // storing every floor's initial lift information
   }
+}
+
+function validateInput(lifts, floors) {
+  let ans = true;
+  let errorText;
+  if (!Number.isInteger(floors) || isNaN(floors) || floors < 2) {
+    errorText = "Floors can only be a positive integer greater than 2.\n";
+    ans = false;
+  }
+  if (!Number.isInteger(lifts) || isNaN(lifts) || lifts < 1) {
+    errorText += "Lifts can only be a positive integer greater than 1.";
+    ans = false;
+  }
+  if (ans == false) {
+    alert(errorText);
+  }
+  return ans;
 }
 
 function renderUI(lifts, floors) {
@@ -94,34 +122,48 @@ function renderUI(lifts, floors) {
       const leftDoor = document.createElement("div");
       //leftDoor.className = "door";
       leftDoor.className = "door ldoor";
-      leftDoor.id=`leftDoor${i}`;
+      leftDoor.id = `leftDoor${i}`;
       liftDiv.appendChild(leftDoor);
       const rightDoor = document.createElement("div");
       //rightDoor.className = "door";
       rightDoor.className = "door rdoor";
-      rightDoor.id=`rightDoor${i}`;
+      rightDoor.id = `rightDoor${i}`;
       liftDiv.appendChild(rightDoor);
     }
   }
 }
 
-simulateInp.addEventListener("click", init);
-reloadInp.addEventListener("click", reloadPage);
+function disableForm() {
+  liftInput.disabled = true;
+  liftInput.className = floorInput.className = "";
+  floorInput.disabled = true;
+  simulateInp.disabled = true;
+  simulateInp.className = "Submit";
+  clearInp.disabled = false;
+  clearInp.className = "clear enabledButton";
+}
 
-function reloadPage() {
-  liftInput.value = 0;
+function clearPage() {
+  liftInput.value = 1;
   liftInput.disabled = false;
-  floorInput.value = 0;
+  floorInput.value = 2;
   floorInput.disabled = false;
+  liftInput.className = floorInput.className = "enabledInput";
   simulateInp.disabled = false;
-  reloadInp.disabled = true;
+  simulateInp.className = "Submit enabledButton";
+  clearInp.disabled = true;
+  clearInp.className = "clear";
   while (simulatedUIDiv.firstChild) {
     simulatedUIDiv.removeChild(simulatedUIDiv.firstChild);
   }
 }
 
+simulateInp.addEventListener("click", init);
+clearInp.addEventListener("click", clearPage);
+
 //after reaching target floor, user wants to go in which direction (up,down)
 function move(target, direction) {
+  console.log("move to " + target + " in direction " + direction);
   let up = Number(target),
     down = Number(target);
   const floors = Number(floorInput.value);
@@ -131,7 +173,11 @@ function move(target, direction) {
     setTimeout(move, 2500, target, direction);
   }
 
-
+  const lifts = Number(liftInput.value);
+  if (lifts == 1 && floorToLiftsMap.get(target).length == 1) {
+    if (!busyLifts.has(1)) openDoors(1, 0, true);
+    return;
+  }
 
   if (
     floorToLiftsMap.get(target).length == 0 ||
@@ -157,7 +203,7 @@ function isLiftDirectionDiff(direction, liftList) {
   for (let i = 0; i < liftList.length; i++) {
     if (direction == liftDir[liftList[i] - 1]) {
       ans = 1;
-      //openDoors(liftList[i],0,true);
+      if (!busyLifts.has(liftList[i])) openDoors(liftList[i], 0, true);
       break;
     }
   }
@@ -165,12 +211,19 @@ function isLiftDirectionDiff(direction, liftList) {
 }
 
 function moveLiftHelper(source, direction, target) {
-  let toBeUsedLift = floorToLiftsMap.get(source)[0];
-  busyLifts.add(toBeUsedLift);
-  liftDir[toBeUsedLift - 1] = direction;
-  console.log(toBeUsedLift + " lift is available on floor" + source);
-  floorToLiftsMap.get(source).splice(0, 1);
-  startAnimation(toBeUsedLift, target, target - source);
+  let i = 0;
+  let toBeUsedLift = 0;
+  for (i = 0; i < floorToLiftsMap.get(source).length; i++) {
+    if (!busyLifts.has(floorToLiftsMap.get(source)[i])) {
+      toBeUsedLift = floorToLiftsMap.get(source)[i];
+      floorToLiftsMap.get(source).splice(i, 1);
+      busyLifts.add(toBeUsedLift);
+      liftDir[toBeUsedLift - 1] = direction;
+      console.log(toBeUsedLift + " lift is available on floor" + source);
+      startAnimation(toBeUsedLift, target, target - source);
+      break;
+    }
+  }
 }
 
 function startAnimation(liftId, target, diff) {
@@ -180,10 +233,12 @@ function startAnimation(liftId, target, diff) {
   liftYPos[liftId - 1] = liftYPos[liftId - 1] - diff * 103;
   const keyframesLocal = new KeyframeEffect(
     lift,
-    [{ transform: `translateY(${current}px)` }
-      ,{ transform: `translateY(${liftYPos[liftId - 1]}px)` }],
+    [
+      { transform: `translateY(${current}px)` },
+      { transform: `translateY(${liftYPos[liftId - 1]}px)` },
+    ],
     {
-      duration: 2000*Math.abs(diff),
+      duration: 2000 * Math.abs(diff),
       fill: "both",
     }
   );
@@ -192,51 +247,50 @@ function startAnimation(liftId, target, diff) {
   liftAnimation.play();
   liftAnimation.onfinish = () => {
     console.log("new y:" + liftYPos[liftId - 1]);
-    //busyLifts.delete(liftId);
-    //floorToLiftsMap.get(target).push(liftId);
-    console.log("Lift has reached..");
-    openDoors(liftId,target);
+    console.log("Lift has reached the target floor..");
+    openDoors(liftId, target, false);
   };
 }
 
-function openDoors(liftId,target){
+function openDoors(liftId, target, onSameFloor) {
   console.log("Doors Opening..");
-  console.log("target: "+target);
   
   const leftDoor = document.getElementById(`leftDoor${liftId}`);
-    const rightDoor = document.getElementById(`rightDoor${liftId}`);
-    const ldoorOpenKeyFrame = new KeyframeEffect(
-      leftDoor,
-      [{transform: `translateX(-100%) scaleX(0)`}],
-      {
-        duration: 2500,
-        easing: "linear",
-        direction: "alternate",
-        iterations: 2
-      }
-    );
-
-    const rdoorOpenKeyFrame = new KeyframeEffect(
-      rightDoor,
-      [{transform: `translateX(100%) scaleX(0)`}],
-      {
-        duration: 2500,
-        easing: "linear",
-        direction: "alternate",
-        iterations: 2
-      }
-    );
-
-    const ldoorAnimation = new Animation(ldoorOpenKeyFrame, document.timeline);
-
-    const rdoorAnimation = new Animation(rdoorOpenKeyFrame, document.timeline);
-    ldoorAnimation.play();
-    rdoorAnimation.play();
-
-    ldoorAnimation.onfinish = ()=>{
-      
-        busyLifts.delete(liftId);
-        floorToLiftsMap.get(target).push(liftId);
-     
+  const rightDoor = document.getElementById(`rightDoor${liftId}`);
+  const ldoorOpenKeyFrame = new KeyframeEffect(
+    leftDoor,
+    [{ transform: `translateX(-100%) scaleX(0)` }],
+    {
+      duration: 2500,
+      easing: "linear",
+      direction: "alternate",
+      iterations: 2,
     }
+  );
+
+  const rdoorOpenKeyFrame = new KeyframeEffect(
+    rightDoor,
+    [{ transform: `translateX(100%) scaleX(0)` }],
+    {
+      duration: 2500,
+      easing: "linear",
+      direction: "alternate",
+      iterations: 2,
+    }
+  );
+
+  const ldoorAnimation = new Animation(ldoorOpenKeyFrame, document.timeline);
+  const rdoorAnimation = new Animation(rdoorOpenKeyFrame, document.timeline);
+  if (!busyLifts.has(liftId)) {
+    busyLifts.add(liftId);
+  }
+  ldoorAnimation.play();
+  rdoorAnimation.play();
+
+  ldoorAnimation.onfinish = () => {
+    busyLifts.delete(liftId);
+    if (!onSameFloor) {
+      floorToLiftsMap.get(target).push(liftId);
+    }
+  };
 }
