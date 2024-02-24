@@ -111,7 +111,7 @@ function renderUI(lifts, floors) {
       upSpan.appendChild(upBtn);
 
       const floorName = document.createElement("span");
-      floorName.textContent = i;
+      floorName.textContent = i - 1;
 
       const downSpan = document.createElement("span");
       const downBtn = document.createElement("button");
